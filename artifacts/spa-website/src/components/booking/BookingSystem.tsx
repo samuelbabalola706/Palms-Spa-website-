@@ -879,8 +879,8 @@ function StepDateTime({
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: ease.out, delay: 0.1 }}
-        className="rounded-2xl border border-[#d6a24b]/30 bg-gradient-to-br from-[#0d0b08] via-[#121008] to-[#0a0806] overflow-hidden"
-        style={{ boxShadow: "0 0 0 1px rgba(214,162,75,0.08), 0 8px 32px rgba(0,0,0,0.45)" }}
+        className="rounded-2xl border border-[#d6a24b]/30 bg-[var(--bg-elevated)] overflow-hidden"
+        style={{ boxShadow: "0 0 0 1px rgba(214,162,75,0.10), 0 4px 20px rgba(0,0,0,0.12)" }}
       >
         {/* Card header */}
         <div className="px-5 py-3 border-b border-[#d6a24b]/20 flex items-center gap-2">
