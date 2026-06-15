@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "ZfRTWWP0G-acnsUTZ5FP0"
+uri = "file://Harmony-Palms-Spa.zip"
+type = "unspecified"
+title = "Harmony Palms Spa — Project Source"
