@@ -370,6 +370,10 @@ export default function BookingSystem() {
                           time={time}
                           onDate={setDate}
                           onTime={setTime}
+                          location={location}
+                          onLocationChange={setLocation}
+                          addOnIds={selectedAddOns}
+                          onAddOnsChange={setSelectedAddOns}
                         />
                       )}
                       {step === 3 && (
@@ -740,11 +744,19 @@ function StepDateTime({
   time,
   onDate,
   onTime,
+  location,
+  onLocationChange,
+  addOnIds,
+  onAddOnsChange,
 }: {
   date: string;
   time: string;
   onDate: (d: string) => void;
   onTime: (t: string) => void;
+  location: LocationOption;
+  onLocationChange: (l: LocationOption) => void;
+  addOnIds: string[];
+  onAddOnsChange: (ids: string[]) => void;
 }) {
   const days = useMemo(() => {
     const list: { iso: string; day: string; date: number; month: string }[] = [];
@@ -876,63 +888,161 @@ function StepDateTime({
           <span className="text-[10px] tracking-[0.25em] uppercase font-semibold text-[#d6a24b]">
             Booking Information
           </span>
+          <span className="ml-auto text-[10px] text-[var(--text-faint)] italic">tap to select</span>
         </div>
 
         {/* Card body */}
-        <div className="px-5 py-4 space-y-3">
-          {/* Location */}
-          <div className="flex items-start gap-3">
+        <div className="px-5 py-4 space-y-2">
+
+          {/* Static: at the spa */}
+          <div className="flex items-start gap-3 px-3 py-2.5 rounded-xl">
             <span className="text-base leading-none mt-0.5 shrink-0">📍</span>
             <span className="text-[var(--text-secondary)] text-sm leading-snug">
               <span className="text-[var(--text-primary)] font-medium">Lekki Phase 1</span>
+              <span className="text-[var(--text-muted)] text-xs ml-1">— At the Spa</span>
             </span>
           </div>
 
-          {/* Island home */}
-          <div className="flex items-start gap-3">
-            <span className="text-base leading-none mt-0.5 shrink-0">🏠</span>
-            <span className="text-[var(--text-secondary)] text-sm leading-snug">
-              <span className="text-[var(--text-primary)] font-medium">Island Home Service:</span>{" "}
-              +₦25,000
-            </span>
-          </div>
+          {/* Selectable: Island Home */}
+          {(() => {
+            const islandOpt = locationOptions.find((l) => l.id === "island-home")!;
+            const isSelected = location.id === "island-home";
+            return (
+              <motion.button
+                type="button"
+                onClick={() => onLocationChange(isSelected ? locationOptions[0] : islandOpt)}
+                whileHover={{ x: 2 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.2 }}
+                className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-xl border text-left transition-colors ${
+                  isSelected
+                    ? "border-[#d6a24b]/60 bg-[#d6a24b]/10"
+                    : "border-transparent hover:border-[#d6a24b]/25 hover:bg-[#d6a24b]/5"
+                }`}
+              >
+                <span className="text-base leading-none mt-0.5 shrink-0">🏠</span>
+                <span className="flex-1 text-sm leading-snug">
+                  <span className={`font-medium ${isSelected ? "text-[#d6a24b]" : "text-[var(--text-primary)]"}`}>
+                    Island Home Service:
+                  </span>{" "}
+                  <span className={isSelected ? "text-[#d6a24b]" : "text-[var(--text-secondary)]"}>+₦25,000</span>
+                  {isSelected && (
+                    <span className="ml-2 text-[10px] tracking-wider uppercase bg-[#d6a24b] text-black px-1.5 py-0.5 rounded-full font-semibold">
+                      Selected
+                    </span>
+                  )}
+                </span>
+                <span className={`mt-0.5 shrink-0 w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
+                  isSelected ? "border-[#d6a24b] bg-[#d6a24b]" : "border-[var(--border-base)]"
+                }`}>
+                  {isSelected && <CheckIcon size={9} />}
+                </span>
+              </motion.button>
+            );
+          })()}
 
-          {/* Mainland home */}
-          <div className="flex items-start gap-3">
-            <span className="text-base leading-none mt-0.5 shrink-0">🚗</span>
-            <span className="text-[var(--text-secondary)] text-sm leading-snug">
-              <span className="text-[var(--text-primary)] font-medium">Mainland Home Service:</span>{" "}
-              Starting from +₦50,000{" "}
-              <span className="text-[var(--text-muted)] text-xs">(depends on location)</span>
-            </span>
-          </div>
+          {/* Selectable: Mainland Home */}
+          {(() => {
+            const mainlandOpt = locationOptions.find((l) => l.id === "mainland-home")!;
+            const isSelected = location.id === "mainland-home";
+            return (
+              <motion.button
+                type="button"
+                onClick={() => onLocationChange(isSelected ? locationOptions[0] : mainlandOpt)}
+                whileHover={{ x: 2 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.2 }}
+                className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-xl border text-left transition-colors ${
+                  isSelected
+                    ? "border-[#d6a24b]/60 bg-[#d6a24b]/10"
+                    : "border-transparent hover:border-[#d6a24b]/25 hover:bg-[#d6a24b]/5"
+                }`}
+              >
+                <span className="text-base leading-none mt-0.5 shrink-0">🚗</span>
+                <span className="flex-1 text-sm leading-snug">
+                  <span className={`font-medium ${isSelected ? "text-[#d6a24b]" : "text-[var(--text-primary)]"}`}>
+                    Mainland Home Service:
+                  </span>{" "}
+                  <span className={isSelected ? "text-[#d6a24b]" : "text-[var(--text-secondary)]"}>
+                    Starting from +₦50,000
+                  </span>{" "}
+                  <span className="text-[var(--text-muted)] text-xs">(depends on location)</span>
+                  {isSelected && (
+                    <span className="ml-2 text-[10px] tracking-wider uppercase bg-[#d6a24b] text-black px-1.5 py-0.5 rounded-full font-semibold">
+                      Selected
+                    </span>
+                  )}
+                </span>
+                <span className={`mt-0.5 shrink-0 w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
+                  isSelected ? "border-[#d6a24b] bg-[#d6a24b]" : "border-[var(--border-base)]"
+                }`}>
+                  {isSelected && <CheckIcon size={9} />}
+                </span>
+              </motion.button>
+            );
+          })()}
 
-          {/* Late night */}
-          <div className="flex items-start gap-3">
-            <span className="text-base leading-none mt-0.5 shrink-0">🌙</span>
-            <span className="text-[var(--text-secondary)] text-sm leading-snug">
-              <span className="text-[var(--text-primary)] font-medium">Late-Night Bookings:</span>{" "}
-              Additional ₦20,000 surcharge
-            </span>
-          </div>
+          {/* Selectable: Late-Night add-on */}
+          {(() => {
+            const lateNightId = "late-night";
+            const isSelected = addOnIds.includes(lateNightId);
+            return (
+              <motion.button
+                type="button"
+                onClick={() =>
+                  onAddOnsChange(
+                    isSelected ? addOnIds.filter((x) => x !== lateNightId) : [...addOnIds, lateNightId]
+                  )
+                }
+                whileHover={{ x: 2 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.2 }}
+                className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-xl border text-left transition-colors ${
+                  isSelected
+                    ? "border-[#d6a24b]/60 bg-[#d6a24b]/10"
+                    : "border-transparent hover:border-[#d6a24b]/25 hover:bg-[#d6a24b]/5"
+                }`}
+              >
+                <span className="text-base leading-none mt-0.5 shrink-0">🌙</span>
+                <span className="flex-1 text-sm leading-snug">
+                  <span className={`font-medium ${isSelected ? "text-[#d6a24b]" : "text-[var(--text-primary)]"}`}>
+                    Late-Night Bookings:
+                  </span>{" "}
+                  <span className={isSelected ? "text-[#d6a24b]" : "text-[var(--text-secondary)]"}>
+                    Additional ₦20,000 surcharge
+                  </span>
+                  {isSelected && (
+                    <span className="ml-2 text-[10px] tracking-wider uppercase bg-[#d6a24b] text-black px-1.5 py-0.5 rounded-full font-semibold">
+                      Added
+                    </span>
+                  )}
+                </span>
+                <span className={`mt-0.5 shrink-0 w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
+                  isSelected ? "border-[#d6a24b] bg-[#d6a24b]" : "border-[var(--border-base)]"
+                }`}>
+                  {isSelected && <CheckIcon size={9} />}
+                </span>
+              </motion.button>
+            );
+          })()}
 
-          {/* Payment */}
-          <div className="flex items-start gap-3">
+          {/* Static: Payment notice */}
+          <div className="flex items-start gap-3 px-3 py-2.5 rounded-xl">
             <span className="text-base leading-none mt-0.5 shrink-0">💳</span>
             <span className="text-[var(--text-secondary)] text-sm leading-snug">
               <span className="text-[var(--text-primary)] font-medium">100% payment</span> is required to confirm all bookings.
             </span>
           </div>
 
-          {/* Divider */}
-          <div className="border-t border-[#d6a24b]/15 pt-3">
+          {/* Divider + note */}
+          <div className="border-t border-[#d6a24b]/15 pt-3 px-3">
             <p className="text-[var(--text-muted)] text-xs leading-relaxed italic">
               Kindly book your appointment in advance to ensure a seamless and personalized experience.
             </p>
           </div>
 
           {/* Contact row */}
-          <div className="flex flex-wrap gap-x-5 gap-y-1.5 pt-0.5">
+          <div className="flex flex-wrap gap-x-5 gap-y-1.5 pt-0.5 px-3">
             <a
               href="https://wa.me/2348123020985"
               target="_blank"
