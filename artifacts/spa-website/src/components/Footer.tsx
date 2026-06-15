@@ -109,13 +109,22 @@ export default function Footer() {
                 </li>
                 <li>
                   <a
-                    href="https://wa.me/2349133075751"
+                    href="https://wa.me/2348123020985"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex gap-2 text-[var(--text-secondary)] text-sm hover:text-[#d6a24b] transition-colors duration-300"
                   >
                     <PhoneIcon size={16} className="text-[#d6a24b] shrink-0" />
-                    0913 307 5751 (WhatsApp)
+                    0812 302 0985 (WhatsApp)
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="tel:+2349133075751"
+                    className="flex gap-2 text-[var(--text-secondary)] text-sm hover:text-[#d6a24b] transition-colors duration-300"
+                  >
+                    <PhoneIcon size={16} className="text-[#d6a24b] shrink-0" />
+                    0913 307 5751 (Call)
                   </a>
                 </li>
                 <li>

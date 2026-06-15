@@ -366,13 +366,12 @@ function ServiceRow({ service, index, onBook }: { service: Service; index: numbe
             {service.price}
           </div>
           <motion.button
-            onClick={onBook}
+            onClick={() => onBook(service.name)}
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.95 }}
             transition={T.fast}
             className="w-9 h-9 rounded-full border border-[var(--border-strong)] hover:border-[#d6a24b] hover:bg-[#d6a24b] hover:text-black flex items-center justify-center text-[var(--text-primary)] transition-colors duration-300"
             aria-label={`Book ${service.name}`}
-            onClick={() => onBook(service.name)}
           >
             <ArrowRightIcon size={14} />
           </motion.button>

@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { T, ease } from "./Motion";
 
-// Business WhatsApp number — Nigerian format: 0913 307 5751
-// International format (E.164 without +): 2349133075751
-const WHATSAPP_NUMBER = "2349133075751";
-const WHATSAPP_DISPLAY = "0913 307 5751";
+// Business WhatsApp number — Nigerian format: 0812 302 0985
+// International format (E.164 without +): 2348123020985
+const WHATSAPP_NUMBER = "2348123020985";
+const WHATSAPP_DISPLAY = "0812 302 0985";
 
 const PREFILLED_MESSAGE =
   "Hello The Harmony Palms 🌴\n\nI'd like to book a wellness experience. Could you please help me with availability and options?\n\nThank you!";
