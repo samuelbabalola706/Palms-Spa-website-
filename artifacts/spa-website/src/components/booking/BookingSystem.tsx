@@ -7,10 +7,16 @@ import {
   addOns,
   locationOptions,
   timeSlots,
+  LATE_NIGHT_SLOTS,
   formatPrice,
   type BookingService,
   type LocationOption,
 } from "./bookingData";
+
+const parseDateLocal = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
 
 /* ------------------------------------------------------------------ */
 /*  BOOKING DESTINATION — Email + WhatsApp                              */
@@ -152,7 +158,7 @@ export default function BookingSystem() {
   const formatBookingPayload = (code: string) => {
     const chosenAddOns = addOns.filter((a) => selectedAddOns.includes(a.id));
     const dateFmt = date
-      ? new Date(date).toLocaleDateString("en-US", {
+      ? parseDateLocal(date).toLocaleDateString("en-US", {
           weekday: "long",
           month: "long",
           day: "numeric",
@@ -384,7 +390,11 @@ export default function BookingSystem() {
                           date={date}
                           time={time}
                           onDate={setDate}
-                          onTime={setTime}
+                          onTime={(t) => {
+                            setTime(t);
+                            if (LATE_NIGHT_SLOTS.has(t)) setLateNight(true);
+                            else setLateNight(false);
+                          }}
                         />
                       )}
                       {step === 3 && (
@@ -395,6 +405,7 @@ export default function BookingSystem() {
                           service={service}
                           location={location}
                           addOnIds={selectedAddOns}
+                          lateNight={lateNight}
                           date={date}
                           time={time}
                           guest={guest}
@@ -909,8 +920,11 @@ function StepDateTime({
         <p className="text-[var(--text-muted)] text-sm mb-4">
           {date ? "We're open 24/7 — choose what works for you." : "Pick a date first."}
         </p>
-        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-          {timeSlots.map((slot, i) => {
+
+        {/* Day slots */}
+        <p className="text-[10px] tracking-[0.2em] uppercase text-[var(--text-faint)] mb-2">Morning · Afternoon · Evening</p>
+        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-4">
+          {timeSlots.filter((s) => !LATE_NIGHT_SLOTS.has(s) && s !== "06:00").map((slot, i) => {
             const isBusy = busySlots.has(slot);
             const isSelected = time === slot;
             return (
@@ -943,6 +957,47 @@ function StepDateTime({
             );
           })}
         </div>
+
+        {/* Late-night slots */}
+        <div className="flex items-center gap-2 mb-2">
+          <p className="text-[10px] tracking-[0.2em] uppercase text-[#d6a24b]/70">
+            🌙 Late Night (10pm – 6am · +₦20,000)
+          </p>
+        </div>
+        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+          {["22:00", "23:00", "00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00"].map((slot, i) => {
+            const isBusy = busySlots.has(slot);
+            const isSelected = time === slot;
+            return (
+              <motion.button
+                key={slot}
+                onClick={() => !isBusy && date && onTime(slot)}
+                disabled={isBusy || !date}
+                whileHover={!isBusy && date ? { y: -2 } : {}}
+                whileTap={!isBusy && date ? { scale: 0.96 } : {}}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: ease.out, delay: i * 0.02 }}
+                className={`relative py-3 rounded-lg border text-sm font-medium transition-colors ${
+                  isSelected
+                    ? "border-[#d6a24b] bg-[#d6a24b] text-black"
+                    : isBusy
+                    ? "border-[var(--border-subtle)] bg-[var(--bg-card)] text-[var(--text-faint)] cursor-not-allowed line-through"
+                    : !date
+                    ? "border-[var(--border-subtle)] bg-[var(--bg-card)] text-[var(--text-faint)] cursor-not-allowed"
+                    : "border-[#d6a24b]/30 hover:border-[#d6a24b] hover:text-[#d6a24b] text-[var(--text-secondary)] bg-[#d6a24b]/5"
+                }`}
+              >
+                {slot}
+                {isBusy && (
+                  <span className="absolute -top-1 -right-1 text-[8px] bg-red-500/20 text-red-300 px-1 rounded">
+                    full
+                  </span>
+                )}
+              </motion.button>
+            );
+          })}
+        </div>
         {date && time && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -953,7 +1008,7 @@ function StepDateTime({
             <ClockIcon size={16} />
             Your slot:&nbsp;
             <span className="text-[var(--text-primary)] font-semibold">
-              {new Date(date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} at {time}
+              {parseDateLocal(date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} at {time}
             </span>
           </motion.div>
         )}
@@ -1034,12 +1089,13 @@ function FormField({ label, children }: { label: string; children: React.ReactNo
 /* ------------------------------------------------------------------ */
 /*  STEP 4 — REVIEW                                                   */
 /* ------------------------------------------------------------------ */
-function StepReview({ service, location, addOnIds, date, time, guest, total }: {
-  service: BookingService | null; location: LocationOption; addOnIds: string[];
+function StepReview({ service, location, addOnIds, lateNight, date, time, guest, total }: {
+  service: BookingService | null; location: LocationOption; addOnIds: string[]; lateNight: boolean;
   date: string; time: string; guest: { name: string; email: string; phone: string; notes: string }; total: number;
 }) {
   const chosenAddOns = addOns.filter((a) => addOnIds.includes(a.id));
-  const formattedDate = date ? new Date(date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : "";
+  const lateNightFee = lateNight ? 20000 : 0;
+  const formattedDate = date ? parseDateLocal(date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : "";
 
   return (
     <div>
@@ -1105,7 +1161,7 @@ function ConfirmationView({ code, guest, service, date, time, location, total, o
   code: string; guest: { name: string; email: string }; service: BookingService | null;
   date: string; time: string; location: LocationOption; total: number; onClose: () => void;
 }) {
-  const formattedDate = date ? new Date(date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : "";
+  const formattedDate = date ? parseDateLocal(date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : "";
 
   const emailUrl = `mailto:${BOOKING_EMAIL}?subject=${encodeURIComponent(`Booking ${code} — ${service?.name ?? "Spa"} — ${guest.name}`)}`;
   const waUrl = `https://wa.me/${BOOKING_WHATSAPP}?text=${encodeURIComponent(`Hello, I just submitted booking ${code}. Please confirm. Thank you!`)}`;
