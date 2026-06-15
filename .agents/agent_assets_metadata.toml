@@ -6,3 +6,9 @@ id = "ZfRTWWP0G-acnsUTZ5FP0"
 uri = "file://Harmony-Palms-Spa.zip"
 type = "unspecified"
 title = "Harmony Palms Spa — Project Source"
+
+[[outputs]]
+id = "gE1pDFUqhaBwVZwP6fbju"
+uri = "file://Harmony-Palms-Spa-Netlify.zip"
+type = "unspecified"
+title = "Harmony Palms Spa — Netlify Deploy Package"
