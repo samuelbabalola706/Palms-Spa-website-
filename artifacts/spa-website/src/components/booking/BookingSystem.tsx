@@ -17,8 +17,8 @@ import {
 /*  All bookings are sent to BOTH destinations automatically.         */
 /* ------------------------------------------------------------------ */
 export const BOOKING_EMAIL = "theharmonypalmsspa@gmail.com";
-export const BOOKING_WHATSAPP = "2349133075751";
-export const BOOKING_WHATSAPP_DISPLAY = "0913 307 5751";
+export const BOOKING_WHATSAPP = "2348123020985";
+export const BOOKING_WHATSAPP_DISPLAY = "+234 812 302 0985";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -861,6 +861,101 @@ function StepDateTime({
           </motion.div>
         )}
       </div>
+
+      {/* ── Booking Information Card ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: ease.out, delay: 0.1 }}
+        className="rounded-2xl border border-[#d6a24b]/30 bg-gradient-to-br from-[#0d0b08] via-[#121008] to-[#0a0806] overflow-hidden"
+        style={{ boxShadow: "0 0 0 1px rgba(214,162,75,0.08), 0 8px 32px rgba(0,0,0,0.45)" }}
+      >
+        {/* Card header */}
+        <div className="px-5 py-3 border-b border-[#d6a24b]/20 flex items-center gap-2">
+          <span className="text-[#d6a24b] text-sm">✦</span>
+          <span className="text-[10px] tracking-[0.25em] uppercase font-semibold text-[#d6a24b]">
+            Booking Information
+          </span>
+        </div>
+
+        {/* Card body */}
+        <div className="px-5 py-4 space-y-3">
+          {/* Location */}
+          <div className="flex items-start gap-3">
+            <span className="text-base leading-none mt-0.5 shrink-0">📍</span>
+            <span className="text-[var(--text-secondary)] text-sm leading-snug">
+              <span className="text-[var(--text-primary)] font-medium">Lekki Phase 1</span>
+            </span>
+          </div>
+
+          {/* Island home */}
+          <div className="flex items-start gap-3">
+            <span className="text-base leading-none mt-0.5 shrink-0">🏠</span>
+            <span className="text-[var(--text-secondary)] text-sm leading-snug">
+              <span className="text-[var(--text-primary)] font-medium">Island Home Service:</span>{" "}
+              +₦25,000
+            </span>
+          </div>
+
+          {/* Mainland home */}
+          <div className="flex items-start gap-3">
+            <span className="text-base leading-none mt-0.5 shrink-0">🚗</span>
+            <span className="text-[var(--text-secondary)] text-sm leading-snug">
+              <span className="text-[var(--text-primary)] font-medium">Mainland Home Service:</span>{" "}
+              Starting from +₦50,000{" "}
+              <span className="text-[var(--text-muted)] text-xs">(depends on location)</span>
+            </span>
+          </div>
+
+          {/* Late night */}
+          <div className="flex items-start gap-3">
+            <span className="text-base leading-none mt-0.5 shrink-0">🌙</span>
+            <span className="text-[var(--text-secondary)] text-sm leading-snug">
+              <span className="text-[var(--text-primary)] font-medium">Late-Night Bookings:</span>{" "}
+              Additional ₦20,000 surcharge
+            </span>
+          </div>
+
+          {/* Payment */}
+          <div className="flex items-start gap-3">
+            <span className="text-base leading-none mt-0.5 shrink-0">💳</span>
+            <span className="text-[var(--text-secondary)] text-sm leading-snug">
+              <span className="text-[var(--text-primary)] font-medium">100% payment</span> is required to confirm all bookings.
+            </span>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-[#d6a24b]/15 pt-3">
+            <p className="text-[var(--text-muted)] text-xs leading-relaxed italic">
+              Kindly book your appointment in advance to ensure a seamless and personalized experience.
+            </p>
+          </div>
+
+          {/* Contact row */}
+          <div className="flex flex-wrap gap-x-5 gap-y-1.5 pt-0.5">
+            <a
+              href="https://wa.me/2348123020985"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-[#25D366] text-xs font-medium hover:underline"
+            >
+              <svg width="13" height="13" viewBox="0 0 32 32" fill="currentColor">
+                <path d="M16 3C9.373 3 4 8.373 4 15c0 2.115.553 4.103 1.522 5.83L4 28l7.348-1.49A11.94 11.94 0 0 0 16 27c6.627 0 12-5.373 12-12S22.627 3 16 3zm0 21.6c-1.65 0-3.243-.41-4.652-1.187l-.333-.184-4.357.884.91-4.226-.218-.347A9.55 9.55 0 0 1 5.6 15c0-5.736 4.667-10.4 10.4-10.4S26.4 9.264 26.4 15c0 5.736-4.661 10.4-10.4 10.4z" />
+              </svg>
+              +234 812 302 0985
+            </a>
+            <a
+              href="tel:09133075751"
+              className="inline-flex items-center gap-1.5 text-[#d6a24b] text-xs font-medium hover:underline"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.84a16 16 0 006.07 6.07l1.21-1.21a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
+              </svg>
+              09133075751
+            </a>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }
