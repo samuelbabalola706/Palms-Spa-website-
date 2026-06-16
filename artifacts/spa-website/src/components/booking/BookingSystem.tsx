@@ -26,13 +26,14 @@ export const BOOKING_EMAIL = "theharmonypalmsspa@gmail.com";
 export const BOOKING_WHATSAPP = "2348123020985";
 export const BOOKING_WHATSAPP_DISPLAY = "0812 302 0985";
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3 | 4 | 5;
 
 const steps = [
-  { n: 1, label: "Service" },
-  { n: 2, label: "Date & Time" },
-  { n: 3, label: "Details" },
-  { n: 4, label: "Review" },
+  { n: 1, label: "Location" },
+  { n: 2, label: "Service" },
+  { n: 3, label: "Date & Time" },
+  { n: 4, label: "Details" },
+  { n: 5, label: "Review" },
 ] as const;
 
 export default function BookingSystem() {
@@ -89,12 +90,10 @@ export default function BookingSystem() {
       setCompleted(false);
       if (matchedService) {
         setService(matchedService);
-        // Service already chosen — skip step 1 and go straight to date/time
-        setStep(2);
-        setDirection(1);
-      } else {
-        setStep(1);
       }
+      // Always start at step 1 (Location & Pricing) — it is required
+      setStep(1);
+      setDirection(1);
       setOpen(true);
     };
     el.addEventListener("click", onClick);
@@ -126,7 +125,7 @@ export default function BookingSystem() {
 
   const goNext = () => {
     setDirection(1);
-    setStep((s) => (s < 4 ? ((s + 1) as Step) : s));
+    setStep((s) => (s < 5 ? ((s + 1) as Step) : s));
   };
   const goPrev = () => {
     setDirection(-1);
@@ -136,9 +135,10 @@ export default function BookingSystem() {
   // Validation
   const canProceed = useMemo(() => {
     switch (step) {
-      case 1: return !!service && !!pricingOption;
-      case 2: return !!date && !!time;
-      case 3: return guest.name.trim().length > 1 && /\S+@\S+\.\S+/.test(guest.email) && guest.phone.length >= 7;
+      case 1: return !!pricingOption;
+      case 2: return !!service;
+      case 3: return !!date && !!time;
+      case 4: return guest.name.trim().length > 1 && /\S+@\S+\.\S+/.test(guest.email) && guest.phone.length >= 7;
       default: return true;
     }
   }, [step, service, pricingOption, date, time, guest]);
@@ -373,16 +373,20 @@ export default function BookingSystem() {
                       transition={{ duration: 0.35, ease: ease.out }}
                     >
                       {step === 1 && (
+                        <StepLocationPricing
+                          pricingOption={pricingOption}
+                          onPricingChange={setPricingOption}
+                        />
+                      )}
+                      {step === 2 && (
                         <StepService
                           selected={service}
                           onSelect={setService}
-                          pricingOption={pricingOption}
-                          onPricingChange={setPricingOption}
                           addOnIds={selectedAddOns}
                           onAddOnsChange={setSelectedAddOns}
                         />
                       )}
-                      {step === 2 && (
+                      {step === 3 && (
                         <StepDateTime
                           date={date}
                           time={time}
@@ -396,10 +400,10 @@ export default function BookingSystem() {
                           }}
                         />
                       )}
-                      {step === 3 && (
+                      {step === 4 && (
                         <StepDetails guest={guest} onChange={setGuest} />
                       )}
-                      {step === 4 && (
+                      {step === 5 && (
                         <StepReview
                           service={service}
                           pricingOption={pricingOption}
@@ -443,7 +447,7 @@ export default function BookingSystem() {
                         ← Back
                       </motion.button>
                     )}
-                    {step < 4 ? (
+                    {step < 5 ? (
                       <motion.button
                         onClick={goNext}
                         disabled={!canProceed}
@@ -555,20 +559,139 @@ function Stepper({ current, onJump }: { current: Step; onJump: (s: number) => vo
 }
 
 /* ------------------------------------------------------------------ */
-/*  STEP 1 — SERVICE + PRICING OPTION + ADD-ONS                        */
+/*  STEP 1 — LOCATION & PRICING (dedicated, unskippable)              */
+/* ------------------------------------------------------------------ */
+function StepLocationPricing({
+  pricingOption,
+  onPricingChange,
+}: {
+  pricingOption: ServicePricingOption | null;
+  onPricingChange: (o: ServicePricingOption) => void;
+}) {
+  const optionIcons: Record<string, JSX.Element> = {
+    lekki: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+    ),
+    island: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+      </svg>
+    ),
+    mainland: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="1"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    ),
+    "late-night": (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+      </svg>
+    ),
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Payment Notice */}
+      <div className="flex items-start gap-3 rounded-xl border border-[#d6a24b]/40 bg-[#d6a24b]/8 px-4 py-3">
+        <svg className="shrink-0 mt-0.5 text-[#d6a24b]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>
+        </svg>
+        <div>
+          <p className="text-[#d6a24b] text-xs font-bold tracking-wide uppercase">
+            100% Payment Is Required To Confirm All Bookings.
+          </p>
+          <p className="text-[var(--text-muted)] text-xs mt-0.5">
+            Kindly book your appointment in advance for a seamless experience.
+          </p>
+        </div>
+      </div>
+
+      {/* Heading */}
+      <div>
+        <h4 className="font-display text-2xl sm:text-3xl text-[var(--text-primary)] mb-1">
+          Where would you like your treatment?
+        </h4>
+        <p className="text-[var(--text-muted)] text-sm">
+          Select one option — this determines the price surcharge on your booking.
+        </p>
+      </div>
+
+      {/* 4 option cards — single column on mobile, 2-col on desktop */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {servicePricingOptions.map((opt) => {
+          const sel = pricingOption?.id === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => onPricingChange(opt)}
+              className={[
+                "w-full text-left p-4 sm:p-5 rounded-xl border-2 transition-all duration-200",
+                sel
+                  ? "border-[#d6a24b] bg-[#d6a24b]/10"
+                  : "border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/8",
+              ].join(" ")}
+            >
+              <div className="flex items-start gap-3">
+                {/* Radio circle */}
+                <div className={[
+                  "shrink-0 mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                  sel ? "border-[#d6a24b] bg-[#d6a24b]" : "border-white/30",
+                ].join(" ")}>
+                  {sel && <div className="w-2 h-2 rounded-full bg-black" />}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  {/* Icon + name + badge */}
+                  <div className="flex items-start justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <span className={sel ? "text-[#d6a24b]" : "text-white/40"}>
+                        {optionIcons[opt.id]}
+                      </span>
+                      <span className="text-[var(--text-primary)] font-semibold text-sm sm:text-base leading-tight">
+                        {opt.label}
+                      </span>
+                    </div>
+                    <span className={[
+                      "shrink-0 text-[11px] font-bold px-2.5 py-0.5 rounded-full border",
+                      sel
+                        ? "text-[#d6a24b] border-[#d6a24b]/50 bg-[#d6a24b]/10"
+                        : opt.surcharge === 0
+                        ? "text-emerald-400 border-emerald-500/40 bg-emerald-500/10"
+                        : "text-white/60 border-white/15 bg-white/5",
+                    ].join(" ")}>
+                      {opt.badge}
+                    </span>
+                  </div>
+                  {/* Description */}
+                  <p className="mt-2 text-xs text-white/50 leading-relaxed">{opt.description}</p>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {!pricingOption && (
+        <p className="text-white/40 text-xs text-center">↑ Select an option above to continue to the next step.</p>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  STEP 2 — SERVICE + ADD-ONS                                         */
 /* ------------------------------------------------------------------ */
 function StepService({
   selected,
   onSelect,
-  pricingOption,
-  onPricingChange,
   addOnIds,
   onAddOnsChange,
 }: {
   selected: BookingService | null;
   onSelect: (s: BookingService) => void;
-  pricingOption: ServicePricingOption | null;
-  onPricingChange: (o: ServicePricingOption) => void;
   addOnIds: string[];
   onAddOnsChange: (ids: string[]) => void;
 }) {
@@ -581,131 +704,18 @@ function StepService({
 
   return (
     <div className="space-y-8">
-
-      {/* Payment Notice Banner */}
-      <div className="rounded-xl bg-gradient-to-r from-[#d6a24b]/15 to-[#d6a24b]/5 border border-[#d6a24b]/40 p-4 flex items-start gap-3">
-        <div className="w-8 h-8 rounded-full bg-[#d6a24b]/20 flex items-center justify-center shrink-0 mt-0.5">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d6a24b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>
-          </svg>
-        </div>
-        <div>
-          <p className="text-[#d6a24b] text-xs font-bold tracking-wide uppercase leading-tight">
-            100% Payment Is Required To Confirm All Bookings.
-          </p>
-          <p className="text-[var(--text-muted)] text-xs mt-1 leading-relaxed">
-            Kindly book your appointment in advance for a seamless experience.
-          </p>
-        </div>
-      </div>
-
-      {/* ── SERVICE LOCATION & PRICING — shown FIRST, required ── */}
-      <div>
-        <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <h4 className="font-display text-xl sm:text-2xl text-[var(--text-primary)]">Service Location & Pricing</h4>
-          <span className="text-[10px] tracking-[0.15em] uppercase bg-red-500/15 text-red-400 border border-red-400/30 px-2 py-0.5 rounded-full font-semibold">Required</span>
-        </div>
-        <p className="text-[var(--text-muted)] text-sm mb-4">Where would you like your treatment? Select one option below.</p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {servicePricingOptions.map((opt, i) => {
-            const isSelected = pricingOption?.id === opt.id;
-            const icons: Record<string, JSX.Element> = {
-              lekki: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
-              ),
-              island: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
-                </svg>
-              ),
-              mainland: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="1"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-              ),
-              "late-night": (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-                </svg>
-              ),
-            };
-            return (
-              <motion.button
-                key={opt.id}
-                onClick={() => onPricingChange(opt)}
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, ease: ease.out, delay: i * 0.06 }}
-                className={`w-full text-left p-4 rounded-xl border transition-all ${
-                  isSelected
-                    ? "border-[#d6a24b] bg-[#d6a24b]/10 shadow-[0_0_0_1px_rgba(214,162,75,0.25)]"
-                    : "border-[var(--border-base)] hover:border-[var(--border-strong)] bg-[var(--bg-card)]"
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  {/* Radio dot */}
-                  <div className={`w-5 h-5 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center transition-colors ${
-                    isSelected ? "border-[#d6a24b] bg-[#d6a24b]" : "border-[var(--border-strong)]"
-                  }`}>
-                    {isSelected && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ duration: 0.2, ease: ease.out }}
-                        className="w-2 h-2 rounded-full bg-black"
-                      />
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    {/* Label row */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className={`shrink-0 transition-colors ${isSelected ? "text-[#d6a24b]" : "text-[var(--text-faint)]"}`}>
-                          {icons[opt.id]}
-                        </span>
-                        <span className="text-[var(--text-primary)] text-sm font-semibold leading-tight">{opt.label}</span>
-                      </div>
-                      <span className={`shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-full border ${
-                        isSelected
-                          ? "text-[#d6a24b] border-[#d6a24b]/40 bg-[#d6a24b]/10"
-                          : opt.surcharge === 0
-                          ? "text-emerald-400 border-emerald-400/30 bg-emerald-400/10"
-                          : "text-[var(--text-muted)] border-[var(--border-base)] bg-[var(--bg-deep)]"
-                      }`}>
-                        {opt.badge}
-                      </span>
-                    </div>
-                    <p className="text-[var(--text-faint)] text-xs mt-2 leading-relaxed">{opt.description}</p>
-                  </div>
-                </div>
-              </motion.button>
-            );
-          })}
-        </div>
-
-        {!pricingOption && (
-          <p className="text-[var(--text-faint)] text-[11px] mt-3 italic">Select an option above to continue.</p>
-        )}
-      </div>
-
-      {/* ── CHOOSE YOUR SERVICE ── */}
+      {/* Service selection */}
       <div>
         <h4 className="font-display text-xl sm:text-2xl text-[var(--text-primary)] mb-1">Choose your service</h4>
-        <p className="text-[var(--text-muted)] text-sm mb-6">Browse by category, then pick a treatment.</p>
+        <p className="text-[var(--text-muted)] text-sm mb-5">Browse by category and pick a treatment.</p>
 
-        <div className="flex flex-wrap gap-2 mb-6 -mx-1">
+        <div className="flex flex-wrap gap-2 mb-5">
           {categories.map((c) => (
             <motion.button
               key={c}
               onClick={() => setActiveCat(c)}
               whileTap={{ scale: 0.97 }}
-              className={`relative text-[11px] tracking-wider uppercase font-semibold px-4 py-2 rounded-full border transition-colors ${
+              className={`text-[11px] tracking-wider uppercase font-semibold px-4 py-2 rounded-full border transition-colors ${
                 activeCat === c
                   ? "border-[#d6a24b] text-[#d6a24b] bg-[#d6a24b]/10"
                   : "border-[var(--border-base)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]"
@@ -727,13 +737,13 @@ function StepService({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.35, ease: ease.out, delay: i * 0.03 }}
+                  transition={{ duration: 0.3, ease: ease.out, delay: i * 0.03 }}
                   onClick={() => onSelect(s)}
-                  whileHover={{ y: -3 }}
-                  className={`w-full text-left p-4 rounded-xl border transition-colors relative overflow-hidden ${
+                  whileHover={{ y: -2 }}
+                  className={`w-full text-left p-4 rounded-xl border-2 transition-all relative overflow-hidden ${
                     isSelected
                       ? "border-[#d6a24b] bg-[#d6a24b]/10"
-                      : "border-[var(--border-base)] hover:border-[var(--border-strong)] bg-[var(--bg-card)]"
+                      : "border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/8"
                   }`}
                 >
                   {s.popular && (
@@ -742,21 +752,17 @@ function StepService({
                     </span>
                   )}
                   <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border shrink-0 mt-1 flex items-center justify-center ${isSelected ? "border-[#d6a24b] bg-[#d6a24b]" : "border-[var(--border-strong)]"}`}>
-                      {isSelected && (
-                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ duration: 0.3, ease: ease.out }}>
-                          <CheckIcon size={11} className="text-black" />
-                        </motion.div>
-                      )}
+                    <div className={`w-5 h-5 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${isSelected ? "border-[#d6a24b] bg-[#d6a24b]" : "border-white/30"}`}>
+                      {isSelected && <div className="w-2 h-2 rounded-full bg-black" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-display text-[var(--text-primary)] text-base leading-tight pr-14">{s.name}</div>
-                      <div className="flex items-center gap-3 mt-1 text-[11px] tracking-wider">
+                      <div className="flex items-center gap-2 mt-1 text-[11px] tracking-wider">
                         <span className="text-[#d6a24b] font-semibold">{s.duration} MIN</span>
-                        <span className="text-[var(--text-faint)]">·</span>
+                        <span className="text-white/30">·</span>
                         <span className="text-[var(--text-secondary)]">{formatPrice(s.price)}</span>
                       </div>
-                      <p className="text-[var(--text-muted)] text-xs mt-1.5 leading-relaxed">{s.description}</p>
+                      <p className="text-white/40 text-xs mt-1.5 leading-relaxed">{s.description}</p>
                     </div>
                   </div>
                 </motion.button>
@@ -770,7 +776,7 @@ function StepService({
       <div>
         <h4 className="font-display text-xl sm:text-2xl text-[var(--text-primary)] mb-1">Enhance your experience</h4>
         <p className="text-[var(--text-muted)] text-sm mb-4">Optional add-ons to elevate your visit.</p>
-        <div className="grid sm:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {addOns.filter((a) => a.id !== "late-night").map((a) => {
             const checked = addOnIds.includes(a.id);
             return (
@@ -778,11 +784,11 @@ function StepService({
                 key={a.id}
                 onClick={() => toggleAddOn(a.id)}
                 whileTap={{ scale: 0.99 }}
-                className={`text-left p-3 rounded-lg border transition-colors flex items-start gap-3 ${
-                  checked ? "border-[#d6a24b] bg-[#d6a24b]/10" : "border-[var(--border-base)] hover:border-[var(--border-strong)] bg-[var(--bg-card)]"
+                className={`text-left p-3 rounded-lg border-2 transition-all flex items-start gap-3 ${
+                  checked ? "border-[#d6a24b] bg-[#d6a24b]/10" : "border-white/10 bg-white/5 hover:border-white/25"
                 }`}
               >
-                <div className={`w-5 h-5 rounded border shrink-0 mt-0.5 flex items-center justify-center ${checked ? "border-[#d6a24b] bg-[#d6a24b]" : "border-[var(--border-strong)]"}`}>
+                <div className={`w-5 h-5 rounded border-2 shrink-0 mt-0.5 flex items-center justify-center ${checked ? "border-[#d6a24b] bg-[#d6a24b]" : "border-white/30"}`}>
                   {checked && <CheckIcon size={11} className="text-black" />}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -790,7 +796,7 @@ function StepService({
                     <span className="text-[var(--text-primary)] text-sm font-medium">{a.name}</span>
                     <span className="text-[#d6a24b] text-xs font-semibold shrink-0">+{formatPrice(a.price)}</span>
                   </div>
-                  <p className="text-[var(--text-faint)] text-xs mt-0.5">{a.description}</p>
+                  <p className="text-white/40 text-xs mt-0.5">{a.description}</p>
                 </div>
               </motion.button>
             );
