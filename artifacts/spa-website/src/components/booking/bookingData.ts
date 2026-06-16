@@ -85,6 +85,50 @@ export const locationOptions: LocationOption[] = [
   { id: "mainland-home", label: "Home — Mainland", description: "Mainland Lagos — starting from ₦50,000 (varies by location)", surcharge: 50000 },
 ];
 
+export type ServicePricingOption = {
+  id: "lekki" | "island" | "mainland" | "late-night";
+  label: string;
+  badge: string;
+  description: string;
+  surcharge: number;
+  isLateNight: boolean;
+};
+
+export const servicePricingOptions: ServicePricingOption[] = [
+  {
+    id: "lekki",
+    label: "Lekki Phase 1",
+    badge: "No extra fee",
+    description: "Visit us at 14 Prince Bode Adebowale Crescent, Lekki Phase 1, Lagos.",
+    surcharge: 0,
+    isLateNight: false,
+  },
+  {
+    id: "island",
+    label: "Island Home Service",
+    badge: "+₦25,000",
+    description: "We come to you — Lekki, Victoria Island, Ikoyi and surrounding Island areas.",
+    surcharge: 25000,
+    isLateNight: false,
+  },
+  {
+    id: "mainland",
+    label: "Mainland Home Service",
+    badge: "Starting +₦50,000",
+    description: "Home service to Mainland Lagos. Exact surcharge varies by location — confirmed at booking.",
+    surcharge: 50000,
+    isLateNight: false,
+  },
+  {
+    id: "late-night",
+    label: "Late-Night Booking",
+    badge: "+₦20,000 surcharge",
+    description: "Bookings between 10:00 PM and 6:00 AM. After-hours surcharge applies.",
+    surcharge: 20000,
+    isLateNight: true,
+  },
+];
+
 export const timeSlots = [
   "07:00", "08:00", "09:00", "10:00", "11:00",
   "12:00", "13:00", "14:00", "15:00", "16:00",

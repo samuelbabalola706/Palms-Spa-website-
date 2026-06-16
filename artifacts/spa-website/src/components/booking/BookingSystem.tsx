@@ -5,12 +5,12 @@ import { ArrowRightIcon, CheckIcon, LocationIcon, ClockIcon } from "../Icons";
 import {
   bookingServices,
   addOns,
-  locationOptions,
   timeSlots,
   LATE_NIGHT_SLOTS,
+  servicePricingOptions,
   formatPrice,
   type BookingService,
-  type LocationOption,
+  type ServicePricingOption,
 } from "./bookingData";
 
 const parseDateLocal = (iso: string) => {
@@ -44,9 +44,8 @@ export default function BookingSystem() {
 
   // Form state
   const [service, setService] = useState<BookingService | null>(null);
-  const [location, setLocation] = useState<LocationOption>(locationOptions[0]);
+  const [pricingOption, setPricingOption] = useState<ServicePricingOption | null>(null);
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
-  const [lateNight, setLateNight] = useState(false);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [guest, setGuest] = useState({ name: "", email: "", phone: "", notes: "" });
@@ -116,12 +115,11 @@ export default function BookingSystem() {
     setTimeout(() => {
       setStep(1);
       setService(null);
+      setPricingOption(null);
       setSelectedAddOns([]);
-      setLateNight(false);
       setDate("");
       setTime("");
       setGuest({ name: "", email: "", phone: "", notes: "" });
-      setLocation(locationOptions[0]);
       setCompleted(false);
     }, 400);
   };
@@ -138,19 +136,18 @@ export default function BookingSystem() {
   // Validation
   const canProceed = useMemo(() => {
     switch (step) {
-      case 1: return !!service;
+      case 1: return !!service && !!pricingOption;
       case 2: return !!date && !!time;
       case 3: return guest.name.trim().length > 1 && /\S+@\S+\.\S+/.test(guest.email) && guest.phone.length >= 7;
       default: return true;
     }
-  }, [step, service, date, time, guest]);
+  }, [step, service, pricingOption, date, time, guest]);
 
   const addOnsTotal = useMemo(
     () => selectedAddOns.reduce((sum, id) => sum + (addOns.find((a) => a.id === id)?.price ?? 0), 0),
     [selectedAddOns]
   );
-  const lateNightFee = lateNight ? 20000 : 0;
-  const total = (service?.price ?? 0) + addOnsTotal + location.surcharge + lateNightFee;
+  const total = (service?.price ?? 0) + addOnsTotal + (pricingOption?.surcharge ?? 0);
 
   /* ------------------------------------------------------------------ */
   /*  Build the formatted booking payload                               */
@@ -176,10 +173,11 @@ export default function BookingSystem() {
       duration: service?.duration ? `${service.duration} MIN` : "—",
       date: dateFmt,
       time,
-      locationLabel: location.label,
-      locationDesc: location.description,
+      pricingLabel: pricingOption?.label ?? "—",
+      pricingBadge: pricingOption?.badge ?? "—",
+      pricingDesc: pricingOption?.description ?? "—",
+      isLateNight: pricingOption?.isLateNight ?? false,
       addOns: chosenAddOns,
-      lateNight: lateNight,
       notes: guest.notes || "—",
       total: formatPrice(total),
     };
@@ -214,8 +212,12 @@ export default function BookingSystem() {
       `    Duration   : ${p.duration}`,
       `    Date       : ${p.date}`,
       `    Time       : ${p.time}`,
-      `    Location   : ${p.locationLabel}`,
-      `                 ${p.locationDesc}`,
+      "",
+      "SERVICE LOCATION & PRICING",
+      "───────────────────────────────────────────",
+      `    Option     : ${p.pricingLabel} (${p.pricingBadge})`,
+      `    Details    : ${p.pricingDesc}`,
+      `    Late-Night : ${p.isLateNight ? "Yes" : "No"}`,
       "",
       "ADD-ONS",
       "───────────────────────────────────────────",
@@ -224,10 +226,6 @@ export default function BookingSystem() {
       "SPECIAL REQUESTS",
       "───────────────────────────────────────────",
       `    ${p.notes}`,
-      "",
-      "TIMING",
-      "───────────────────────────────────────────",
-      `    ${p.lateNight ? "Late-Night Booking (10pm – 6am) — +" + formatPrice(20000) : "Standard hours"}`,
       "",
       "PRICE SUMMARY",
       "───────────────────────────────────────────",
@@ -268,8 +266,14 @@ export default function BookingSystem() {
       `• *Duration:* ${p.duration}`,
       `• *Date:* ${p.date}`,
       `• *Time:* ${p.time}`,
-      `• *Location:* ${p.locationLabel}`,
-      `  ${p.locationDesc}`,
+      "",
+      `━━━━━━━━━━━━━━━━━━━━━━`,
+      `📍 *SERVICE LOCATION & PRICING*`,
+      `━━━━━━━━━━━━━━━━━━━━━━`,
+      `• *Option:* ${p.pricingLabel}`,
+      `• *Fee:* ${p.pricingBadge}`,
+      `• *Details:* ${p.pricingDesc}`,
+      `• *Late-Night:* ${p.isLateNight ? "Yes (10pm–6am surcharge)" : "No"}`,
       "",
       `━━━━━━━━━━━━━━━━━━━━━━`,
       `➕ *ADD-ONS*`,
@@ -280,11 +284,6 @@ export default function BookingSystem() {
       `📝 *SPECIAL REQUESTS*`,
       `━━━━━━━━━━━━━━━━━━━━━━`,
       `${p.notes}`,
-      "",
-      `━━━━━━━━━━━━━━━━━━━━━━`,
-      `🌙 *TIMING*`,
-      `━━━━━━━━━━━━━━━━━━━━━━`,
-      `• ${p.lateNight ? "Late-Night Booking (10pm – 6am) — +" + formatPrice(20000) : "Standard hours"}`,
       "",
       `━━━━━━━━━━━━━━━━━━━━━━`,
       `💰 *TOTAL: ${p.total}*`,
@@ -377,12 +376,10 @@ export default function BookingSystem() {
                         <StepService
                           selected={service}
                           onSelect={setService}
-                          location={location}
-                          onLocationChange={setLocation}
+                          pricingOption={pricingOption}
+                          onPricingChange={setPricingOption}
                           addOnIds={selectedAddOns}
                           onAddOnsChange={setSelectedAddOns}
-                          lateNight={lateNight}
-                          onLateNightChange={setLateNight}
                         />
                       )}
                       {step === 2 && (
@@ -392,8 +389,10 @@ export default function BookingSystem() {
                           onDate={setDate}
                           onTime={(t) => {
                             setTime(t);
-                            if (LATE_NIGHT_SLOTS.has(t)) setLateNight(true);
-                            else setLateNight(false);
+                            if (LATE_NIGHT_SLOTS.has(t)) {
+                              const lnOpt = servicePricingOptions.find((o) => o.id === "late-night")!;
+                              setPricingOption(lnOpt);
+                            }
                           }}
                         />
                       )}
@@ -403,9 +402,8 @@ export default function BookingSystem() {
                       {step === 4 && (
                         <StepReview
                           service={service}
-                          location={location}
+                          pricingOption={pricingOption}
                           addOnIds={selectedAddOns}
-                          lateNight={lateNight}
                           date={date}
                           time={time}
                           guest={guest}
@@ -479,7 +477,7 @@ export default function BookingSystem() {
                 service={service}
                 date={date}
                 time={time}
-                location={location}
+                pricingOption={pricingOption}
                 total={total}
                 onClose={handleClose}
               />
@@ -557,26 +555,22 @@ function Stepper({ current, onJump }: { current: Step; onJump: (s: number) => vo
 }
 
 /* ------------------------------------------------------------------ */
-/*  STEP 1 — SERVICE + LOCATION + ADD-ONS                              */
+/*  STEP 1 — SERVICE + PRICING OPTION + ADD-ONS                        */
 /* ------------------------------------------------------------------ */
 function StepService({
   selected,
   onSelect,
-  location,
-  onLocationChange,
+  pricingOption,
+  onPricingChange,
   addOnIds,
   onAddOnsChange,
-  lateNight,
-  onLateNightChange,
 }: {
   selected: BookingService | null;
   onSelect: (s: BookingService) => void;
-  location: LocationOption;
-  onLocationChange: (l: LocationOption) => void;
+  pricingOption: ServicePricingOption | null;
+  onPricingChange: (o: ServicePricingOption) => void;
   addOnIds: string[];
   onAddOnsChange: (ids: string[]) => void;
-  lateNight: boolean;
-  onLateNightChange: (v: boolean) => void;
 }) {
   const categories = Array.from(new Set(bookingServices.map((s) => s.category)));
   const [activeCat, setActiveCat] = useState(selected?.category ?? categories[0]);
@@ -585,8 +579,50 @@ function StepService({
   const toggleAddOn = (id: string) =>
     onAddOnsChange(addOnIds.includes(id) ? addOnIds.filter((x) => x !== id) : [...addOnIds, id]);
 
+  const pricingIcons: Record<string, React.ReactNode> = {
+    lekki: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+    ),
+    island: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+      </svg>
+    ),
+    mainland: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>
+      </svg>
+    ),
+    "late-night": (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+      </svg>
+    ),
+  };
+
   return (
     <div className="space-y-8">
+
+      {/* Payment Notice Banner */}
+      <div className="rounded-xl bg-gradient-to-r from-[#d6a24b]/15 to-[#d6a24b]/5 border border-[#d6a24b]/40 p-4 flex items-start gap-3">
+        <div className="w-8 h-8 rounded-full bg-[#d6a24b]/20 flex items-center justify-center shrink-0 mt-0.5">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d6a24b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>
+          </svg>
+        </div>
+        <div>
+          <p className="text-[#d6a24b] text-xs font-bold tracking-wide uppercase leading-tight">
+            100% Payment Is Required To Confirm All Bookings.
+          </p>
+          <p className="text-[var(--text-muted)] text-xs mt-1 leading-relaxed">
+            Kindly book your appointment in advance for a seamless experience.
+          </p>
+        </div>
+      </div>
+
+      {/* Service selection */}
       <div>
         <h4 className="font-display text-xl sm:text-2xl text-[var(--text-primary)] mb-1">Choose your service</h4>
         <p className="text-[var(--text-muted)] text-sm mb-6">Browse by category, then pick a treatment.</p>
@@ -634,11 +670,7 @@ function StepService({
                     </span>
                   )}
                   <div className="flex items-start gap-3">
-                    <div
-                      className={`w-5 h-5 rounded-full border shrink-0 mt-1 flex items-center justify-center ${
-                        isSelected ? "border-[#d6a24b] bg-[#d6a24b]" : "border-[var(--border-strong)]"
-                      }`}
-                    >
+                    <div className={`w-5 h-5 rounded-full border shrink-0 mt-1 flex items-center justify-center ${isSelected ? "border-[#d6a24b] bg-[#d6a24b]" : "border-[var(--border-strong)]"}`}>
                       {isSelected && (
                         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ duration: 0.3, ease: ease.out }}>
                           <CheckIcon size={11} className="text-black" />
@@ -662,178 +694,106 @@ function StepService({
         </div>
       </div>
 
+      {/* Service Location & Pricing — REQUIRED */}
       <div>
-        <h4 className="font-display text-xl sm:text-2xl text-[var(--text-primary)] mb-1">Where would you like your treatment?</h4>
-        <p className="text-[var(--text-muted)] text-sm mb-4">In-spa or in the comfort of your home.</p>
-        <div className="grid sm:grid-cols-3 gap-3">
-          {locationOptions.map((l) => {
-            const isSelected = location.id === l.id;
+        <div className="flex items-center gap-2 mb-1">
+          <h4 className="font-display text-xl sm:text-2xl text-[var(--text-primary)]">Service Location & Pricing</h4>
+          <span className="text-[10px] tracking-[0.15em] uppercase bg-red-500/15 text-red-400 border border-red-400/30 px-2 py-0.5 rounded-full font-semibold">Required</span>
+        </div>
+        <p className="text-[var(--text-muted)] text-sm mb-4">Choose one option — this determines your total price.</p>
+
+        <div className="grid sm:grid-cols-2 gap-3">
+          {servicePricingOptions.map((opt, i) => {
+            const isSelected = pricingOption?.id === opt.id;
             return (
               <motion.button
-                key={l.id}
-                onClick={() => onLocationChange(l)}
+                key={opt.id}
+                onClick={() => onPricingChange(opt)}
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.98 }}
-                className={`text-left p-4 rounded-xl border transition-colors ${
-                  isSelected ? "border-[#d6a24b] bg-[#d6a24b]/10" : "border-[var(--border-base)] hover:border-[var(--border-strong)] bg-[var(--bg-card)]"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: ease.out, delay: i * 0.05 }}
+                className={`text-left p-4 rounded-xl border transition-all ${
+                  isSelected
+                    ? "border-[#d6a24b] bg-[#d6a24b]/10 shadow-[0_0_0_1px_rgba(214,162,75,0.3)]"
+                    : "border-[var(--border-base)] hover:border-[var(--border-strong)] bg-[var(--bg-card)]"
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <LocationIcon size={16} className={isSelected ? "text-[#d6a24b]" : "text-[var(--text-faint)]"} />
-                  <span className="text-[var(--text-primary)] text-sm font-semibold">{l.label}</span>
+                <div className="flex items-start gap-3">
+                  {/* Radio indicator */}
+                  <div className={`w-5 h-5 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center transition-colors ${
+                    isSelected ? "border-[#d6a24b] bg-[#d6a24b]" : "border-[var(--border-strong)]"
+                  }`}>
+                    {isSelected && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.25, ease: ease.out }}
+                        className="w-2 h-2 rounded-full bg-black"
+                      />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <span className={`transition-colors ${isSelected ? "text-[#d6a24b]" : "text-[var(--text-faint)]"}`}>
+                          {pricingIcons[opt.id]}
+                        </span>
+                        <span className="text-[var(--text-primary)] text-sm font-semibold">{opt.label}</span>
+                      </div>
+                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border transition-colors ${
+                        isSelected
+                          ? "text-[#d6a24b] border-[#d6a24b]/40 bg-[#d6a24b]/10"
+                          : opt.surcharge === 0
+                          ? "text-green-400 border-green-400/30 bg-green-400/10"
+                          : "text-[var(--text-muted)] border-[var(--border-base)]"
+                      }`}>
+                        {opt.badge}
+                      </span>
+                    </div>
+                    <p className="text-[var(--text-faint)] text-xs mt-1.5 leading-relaxed">{opt.description}</p>
+                  </div>
                 </div>
-                <p className="text-[var(--text-muted)] text-xs mt-1">{l.description}</p>
-                {l.surcharge > 0 && (
-                  <p className="text-[#d6a24b] text-[11px] mt-1 font-semibold">+{formatPrice(l.surcharge)}</p>
-                )}
               </motion.button>
             );
           })}
         </div>
+
+        {!pricingOption && (
+          <p className="text-[var(--text-faint)] text-xs mt-2 italic">↑ Please select an option above to continue.</p>
+        )}
       </div>
 
+      {/* Add-ons */}
       <div>
         <h4 className="font-display text-xl sm:text-2xl text-[var(--text-primary)] mb-1">Enhance your experience</h4>
         <p className="text-[var(--text-muted)] text-sm mb-4">Optional add-ons to elevate your visit.</p>
         <div className="grid sm:grid-cols-2 gap-2">
-          {addOns
-            .filter((a) => a.id !== "late-night")
-            .map((a) => {
-              const checked = addOnIds.includes(a.id);
-              return (
-                <motion.button
-                  key={a.id}
-                  onClick={() => toggleAddOn(a.id)}
-                  whileTap={{ scale: 0.99 }}
-                  className={`text-left p-3 rounded-lg border transition-colors flex items-start gap-3 ${
-                    checked ? "border-[#d6a24b] bg-[#d6a24b]/10" : "border-[var(--border-base)] hover:border-[var(--border-strong)] bg-[var(--bg-card)]"
-                  }`}
-                >
-                  <div
-                    className={`w-5 h-5 rounded border shrink-0 mt-0.5 flex items-center justify-center ${
-                      checked ? "border-[#d6a24b] bg-[#d6a24b]" : "border-[var(--border-strong)]"
-                    }`}
-                  >
-                    {checked && <CheckIcon size={11} className="text-black" />}
+          {addOns.filter((a) => a.id !== "late-night").map((a) => {
+            const checked = addOnIds.includes(a.id);
+            return (
+              <motion.button
+                key={a.id}
+                onClick={() => toggleAddOn(a.id)}
+                whileTap={{ scale: 0.99 }}
+                className={`text-left p-3 rounded-lg border transition-colors flex items-start gap-3 ${
+                  checked ? "border-[#d6a24b] bg-[#d6a24b]/10" : "border-[var(--border-base)] hover:border-[var(--border-strong)] bg-[var(--bg-card)]"
+                }`}
+              >
+                <div className={`w-5 h-5 rounded border shrink-0 mt-0.5 flex items-center justify-center ${checked ? "border-[#d6a24b] bg-[#d6a24b]" : "border-[var(--border-strong)]"}`}>
+                  {checked && <CheckIcon size={11} className="text-black" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[var(--text-primary)] text-sm font-medium">{a.name}</span>
+                    <span className="text-[#d6a24b] text-xs font-semibold shrink-0">+{formatPrice(a.price)}</span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[var(--text-primary)] text-sm font-medium">{a.name}</span>
-                      <span className="text-[#d6a24b] text-xs font-semibold shrink-0">+{formatPrice(a.price)}</span>
-                    </div>
-                    <p className="text-[var(--text-faint)] text-xs mt-0.5">{a.description}</p>
-                  </div>
-                </motion.button>
-              );
-            })}
-        </div>
-      </div>
-
-      {/* Late-Night Toggle */}
-      <div className="rounded-xl border border-[var(--border-base)] bg-[var(--bg-card)] p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#d6a24b]/10 flex items-center justify-center shrink-0">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d6a24b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-              </svg>
-            </div>
-            <div>
-              <h4 className="text-[var(--text-primary)] text-sm font-semibold">Late-Night Booking</h4>
-              <p className="text-[var(--text-muted)] text-xs mt-1 leading-relaxed">Booking between 10:00 PM and 6:00 AM includes an additional surcharge of <span className="text-[#d6a24b] font-semibold">{formatPrice(20000)}</span>.</p>
-            </div>
-          </div>
-          <button
-            onClick={() => onLateNightChange(!lateNight)}
-            className={`shrink-0 relative w-12 h-7 rounded-full transition-colors duration-300 ${lateNight ? "bg-[#d6a24b]" : "bg-[var(--border-strong)]"}`}
-            aria-label="Toggle late-night booking"
-          >
-            <span className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${lateNight ? "translate-x-5" : "translate-x-0"}`} />
-          </button>
-        </div>
-        {lateNight && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, ease: ease.out }}
-            className="overflow-hidden"
-          >
-            <div className="mt-4 pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between">
-              <span className="text-[var(--text-muted)] text-xs">Late-night surcharge added</span>
-              <span className="text-[#d6a24b] text-sm font-semibold">+{formatPrice(20000)}</span>
-            </div>
-          </motion.div>
-        )}
-      </div>
-
-      {/* Booking Rules */}
-      <div className="rounded-xl border border-[#d6a24b]/20 bg-gradient-to-br from-[var(--bg-card)] to-[var(--bg-deep)] p-5 space-y-4">
-        <div className="text-[#d6a24b] text-[10px] tracking-[0.25em] uppercase font-semibold flex items-center gap-2">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" />
-          </svg>
-          Booking Rules
-        </div>
-
-        <div className="space-y-3">
-          {/* Payment Rule */}
-          <div className="flex items-start gap-3">
-            <div className="w-7 h-7 rounded-full bg-[#d6a24b]/10 flex items-center justify-center shrink-0 mt-0.5">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d6a24b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" />
-              </svg>
-            </div>
-            <div>
-              <div className="text-[var(--text-primary)] text-sm font-semibold">100% Payment Required</div>
-              <p className="text-[var(--text-muted)] text-xs mt-0.5 leading-relaxed">All bookings must be paid in full to be confirmed. No walk-in holds without prepayment.</p>
-            </div>
-          </div>
-
-          {/* Advance Booking */}
-          <div className="flex items-start gap-3">
-            <div className="w-7 h-7 rounded-full bg-[#d6a24b]/10 flex items-center justify-center shrink-0 mt-0.5">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d6a24b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4" /><path d="M8 2v4" /><path d="M3 10h18" />
-              </svg>
-            </div>
-            <div>
-              <div className="text-[var(--text-primary)] text-sm font-semibold">Advance Booking Required</div>
-              <p className="text-[var(--text-muted)] text-xs mt-0.5 leading-relaxed">Please book ahead to ensure availability and personalized preparation. Same-day requests may be accommodated subject to availability.</p>
-            </div>
-          </div>
-
-          {/* Location Pricing */}
-          <div className="flex items-start gap-3">
-            <div className="w-7 h-7 rounded-full bg-[#d6a24b]/10 flex items-center justify-center shrink-0 mt-0.5">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d6a24b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
-              </svg>
-            </div>
-            <div>
-              <div className="text-[var(--text-primary)] text-sm font-semibold">Location-Based Pricing</div>
-              <p className="text-[var(--text-muted)] text-xs mt-0.5 leading-relaxed">Home service fees vary by area. <span className="text-[var(--text-primary)]">Island</span> +₦25,000. <span className="text-[var(--text-primary)]">Mainland</span> from +₦50,000 depending on exact location.</p>
-            </div>
-          </div>
-
-          {/* Late Night */}
-          <div className="flex items-start gap-3">
-            <div className="w-7 h-7 rounded-full bg-[#d6a24b]/10 flex items-center justify-center shrink-0 mt-0.5">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d6a24b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-              </svg>
-            </div>
-            <div>
-              <div className="text-[var(--text-primary)] text-sm font-semibold">Late-Night Surcharge</div>
-              <p className="text-[var(--text-muted)] text-xs mt-0.5 leading-relaxed">Bookings between 10pm and 6am carry an additional <span className="text-[#d6a24b] font-semibold">+₦20,000</span> surcharge.</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t border-[var(--border-subtle)] pt-3 text-center">
-          <p className="text-[var(--text-muted)] text-[11px] leading-relaxed">
-            All bookings are sent directly to our team on <span className="text-[#d6a24b] font-semibold">WhatsApp</span> for fast confirmation.
-          </p>
+                  <p className="text-[var(--text-faint)] text-xs mt-0.5">{a.description}</p>
+                </div>
+              </motion.button>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -1089,12 +1049,11 @@ function FormField({ label, children }: { label: string; children: React.ReactNo
 /* ------------------------------------------------------------------ */
 /*  STEP 4 — REVIEW                                                   */
 /* ------------------------------------------------------------------ */
-function StepReview({ service, location, addOnIds, lateNight, date, time, guest, total }: {
-  service: BookingService | null; location: LocationOption; addOnIds: string[]; lateNight: boolean;
+function StepReview({ service, pricingOption, addOnIds, date, time, guest, total }: {
+  service: BookingService | null; pricingOption: ServicePricingOption | null; addOnIds: string[];
   date: string; time: string; guest: { name: string; email: string; phone: string; notes: string }; total: number;
 }) {
   const chosenAddOns = addOns.filter((a) => addOnIds.includes(a.id));
-  const lateNightFee = lateNight ? 20000 : 0;
   const formattedDate = date ? parseDateLocal(date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : "";
 
   return (
@@ -1102,10 +1061,22 @@ function StepReview({ service, location, addOnIds, lateNight, date, time, guest,
       <h4 className="font-display text-xl sm:text-2xl text-[var(--text-primary)] mb-1">Review your reservation</h4>
       <p className="text-[var(--text-muted)] text-sm mb-6">Please confirm the details below.</p>
 
+      {/* Payment notice in review step too */}
+      <div className="rounded-lg bg-[#d6a24b]/10 border border-[#d6a24b]/30 px-4 py-3 mb-5 flex items-center gap-2">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d6a24b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>
+        </svg>
+        <p className="text-[#d6a24b] text-[11px] font-semibold tracking-wide uppercase">100% Payment Is Required To Confirm All Bookings.</p>
+      </div>
+
       <div className="grid sm:grid-cols-[1.2fr_1fr] gap-4">
         <div className="space-y-3">
           <ReviewRow label="Service" value={service?.name} sub={service ? `${service.duration} MIN` : undefined} />
-          <ReviewRow label="Location" value={location.label} sub={location.description} />
+          <ReviewRow
+            label="Location & Pricing"
+            value={pricingOption?.label ?? "—"}
+            sub={pricingOption ? `${pricingOption.badge} · ${pricingOption.description}` : undefined}
+          />
           <ReviewRow label="Date & Time" value={formattedDate} sub={time} />
           <ReviewRow label="Guest" value={guest.name} sub={`${guest.email} · ${guest.phone}`} />
           {guest.notes && <ReviewRow label="Notes" value={guest.notes} />}
@@ -1116,15 +1087,16 @@ function StepReview({ service, location, addOnIds, lateNight, date, time, guest,
           <div className="space-y-2.5 text-sm">
             <PriceRow label={service?.name ?? "—"} value={formatPrice(service?.price ?? 0)} />
             {chosenAddOns.map((a) => <PriceRow key={a.id} label={a.name} value={`+${formatPrice(a.price)}`} small />)}
-            {location.surcharge > 0 && <PriceRow label={`${location.label} fee`} value={`+${formatPrice(location.surcharge)}`} small />}
-            {lateNightFee > 0 && <PriceRow label="Late-night surcharge (10pm–6am)" value={`+${formatPrice(lateNightFee)}`} small />}
+            {pricingOption && pricingOption.surcharge > 0 && (
+              <PriceRow label={pricingOption.label} value={`+${formatPrice(pricingOption.surcharge)}`} small />
+            )}
             <div className="border-t border-white/10 my-3" />
             <div className="flex justify-between items-baseline">
               <span className="text-white/60 text-[11px] tracking-[0.2em] uppercase">Total</span>
               <span className="font-display text-2xl text-[#d6a24b]">{formatPrice(total)}</span>
             </div>
             <p className="text-white/40 text-[11px] mt-2 leading-relaxed">
-              Payment is collected at the spa. We'll reach out to you shortly.
+              100% payment required to confirm. We'll reach out to you shortly.
             </p>
           </div>
         </div>
@@ -1157,9 +1129,9 @@ function PriceRow({ label, value, small }: { label: string; value: string; small
 /* ------------------------------------------------------------------ */
 /*  CONFIRMATION VIEW                                                 */
 /* ------------------------------------------------------------------ */
-function ConfirmationView({ code, guest, service, date, time, location, total, onClose }: {
+function ConfirmationView({ code, guest, service, date, time, pricingOption, total, onClose }: {
   code: string; guest: { name: string; email: string }; service: BookingService | null;
-  date: string; time: string; location: LocationOption; total: number; onClose: () => void;
+  date: string; time: string; pricingOption: ServicePricingOption | null; total: number; onClose: () => void;
 }) {
   const formattedDate = date ? parseDateLocal(date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : "";
 
@@ -1237,8 +1209,8 @@ function ConfirmationView({ code, guest, service, date, time, location, total, o
         <div className="flex items-start gap-3 mb-3">
           <LocationIcon size={18} className="text-[#d6a24b] shrink-0 mt-0.5" />
           <div>
-            <div className="text-[var(--text-primary)] text-sm">{location.label}</div>
-            <div className="text-[var(--text-muted)] text-xs mt-0.5">{location.description}</div>
+            <div className="text-[var(--text-primary)] text-sm">{pricingOption?.label ?? "—"}</div>
+            <div className="text-[var(--text-muted)] text-xs mt-0.5">{pricingOption?.description ?? "—"}</div>
           </div>
         </div>
         <div className="border-t border-[var(--border-subtle)] mt-3 pt-3 flex items-center justify-between">
