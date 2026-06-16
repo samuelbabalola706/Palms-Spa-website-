@@ -579,29 +579,6 @@ function StepService({
   const toggleAddOn = (id: string) =>
     onAddOnsChange(addOnIds.includes(id) ? addOnIds.filter((x) => x !== id) : [...addOnIds, id]);
 
-  const pricingIcons: Record<string, React.ReactNode> = {
-    lekki: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-      </svg>
-    ),
-    island: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
-      </svg>
-    ),
-    mainland: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>
-      </svg>
-    ),
-    "late-night": (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-      </svg>
-    ),
-  };
-
   return (
     <div className="space-y-8">
 
@@ -622,7 +599,102 @@ function StepService({
         </div>
       </div>
 
-      {/* Service selection */}
+      {/* ── SERVICE LOCATION & PRICING — shown FIRST, required ── */}
+      <div>
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
+          <h4 className="font-display text-xl sm:text-2xl text-[var(--text-primary)]">Service Location & Pricing</h4>
+          <span className="text-[10px] tracking-[0.15em] uppercase bg-red-500/15 text-red-400 border border-red-400/30 px-2 py-0.5 rounded-full font-semibold">Required</span>
+        </div>
+        <p className="text-[var(--text-muted)] text-sm mb-4">Where would you like your treatment? Select one option below.</p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {servicePricingOptions.map((opt, i) => {
+            const isSelected = pricingOption?.id === opt.id;
+            const icons: Record<string, JSX.Element> = {
+              lekki: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+              ),
+              island: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+                </svg>
+              ),
+              mainland: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="1"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              ),
+              "late-night": (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+                </svg>
+              ),
+            };
+            return (
+              <motion.button
+                key={opt.id}
+                onClick={() => onPricingChange(opt)}
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: ease.out, delay: i * 0.06 }}
+                className={`w-full text-left p-4 rounded-xl border transition-all ${
+                  isSelected
+                    ? "border-[#d6a24b] bg-[#d6a24b]/10 shadow-[0_0_0_1px_rgba(214,162,75,0.25)]"
+                    : "border-[var(--border-base)] hover:border-[var(--border-strong)] bg-[var(--bg-card)]"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  {/* Radio dot */}
+                  <div className={`w-5 h-5 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center transition-colors ${
+                    isSelected ? "border-[#d6a24b] bg-[#d6a24b]" : "border-[var(--border-strong)]"
+                  }`}>
+                    {isSelected && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.2, ease: ease.out }}
+                        className="w-2 h-2 rounded-full bg-black"
+                      />
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    {/* Label row */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={`shrink-0 transition-colors ${isSelected ? "text-[#d6a24b]" : "text-[var(--text-faint)]"}`}>
+                          {icons[opt.id]}
+                        </span>
+                        <span className="text-[var(--text-primary)] text-sm font-semibold leading-tight">{opt.label}</span>
+                      </div>
+                      <span className={`shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+                        isSelected
+                          ? "text-[#d6a24b] border-[#d6a24b]/40 bg-[#d6a24b]/10"
+                          : opt.surcharge === 0
+                          ? "text-emerald-400 border-emerald-400/30 bg-emerald-400/10"
+                          : "text-[var(--text-muted)] border-[var(--border-base)] bg-[var(--bg-deep)]"
+                      }`}>
+                        {opt.badge}
+                      </span>
+                    </div>
+                    <p className="text-[var(--text-faint)] text-xs mt-2 leading-relaxed">{opt.description}</p>
+                  </div>
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+
+        {!pricingOption && (
+          <p className="text-[var(--text-faint)] text-[11px] mt-3 italic">Select an option above to continue.</p>
+        )}
+      </div>
+
+      {/* ── CHOOSE YOUR SERVICE ── */}
       <div>
         <h4 className="font-display text-xl sm:text-2xl text-[var(--text-primary)] mb-1">Choose your service</h4>
         <p className="text-[var(--text-muted)] text-sm mb-6">Browse by category, then pick a treatment.</p>
@@ -644,7 +716,7 @@ function StepService({
           ))}
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <AnimatePresence mode="popLayout">
             {filtered.map((s, i) => {
               const isSelected = selected?.id === s.id;
@@ -658,7 +730,7 @@ function StepService({
                   transition={{ duration: 0.35, ease: ease.out, delay: i * 0.03 }}
                   onClick={() => onSelect(s)}
                   whileHover={{ y: -3 }}
-                  className={`text-left p-4 rounded-xl border transition-colors relative overflow-hidden ${
+                  className={`w-full text-left p-4 rounded-xl border transition-colors relative overflow-hidden ${
                     isSelected
                       ? "border-[#d6a24b] bg-[#d6a24b]/10"
                       : "border-[var(--border-base)] hover:border-[var(--border-strong)] bg-[var(--bg-card)]"
@@ -678,13 +750,13 @@ function StepService({
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-display text-[var(--text-primary)] text-lg leading-tight pr-16">{s.name}</div>
+                      <div className="font-display text-[var(--text-primary)] text-base leading-tight pr-14">{s.name}</div>
                       <div className="flex items-center gap-3 mt-1 text-[11px] tracking-wider">
                         <span className="text-[#d6a24b] font-semibold">{s.duration} MIN</span>
                         <span className="text-[var(--text-faint)]">·</span>
                         <span className="text-[var(--text-secondary)]">{formatPrice(s.price)}</span>
                       </div>
-                      <p className="text-[var(--text-muted)] text-xs mt-2 leading-relaxed">{s.description}</p>
+                      <p className="text-[var(--text-muted)] text-xs mt-1.5 leading-relaxed">{s.description}</p>
                     </div>
                   </div>
                 </motion.button>
@@ -692,77 +764,6 @@ function StepService({
             })}
           </AnimatePresence>
         </div>
-      </div>
-
-      {/* Service Location & Pricing — REQUIRED */}
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <h4 className="font-display text-xl sm:text-2xl text-[var(--text-primary)]">Service Location & Pricing</h4>
-          <span className="text-[10px] tracking-[0.15em] uppercase bg-red-500/15 text-red-400 border border-red-400/30 px-2 py-0.5 rounded-full font-semibold">Required</span>
-        </div>
-        <p className="text-[var(--text-muted)] text-sm mb-4">Choose one option — this determines your total price.</p>
-
-        <div className="grid sm:grid-cols-2 gap-3">
-          {servicePricingOptions.map((opt, i) => {
-            const isSelected = pricingOption?.id === opt.id;
-            return (
-              <motion.button
-                key={opt.id}
-                onClick={() => onPricingChange(opt)}
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, ease: ease.out, delay: i * 0.05 }}
-                className={`text-left p-4 rounded-xl border transition-all ${
-                  isSelected
-                    ? "border-[#d6a24b] bg-[#d6a24b]/10 shadow-[0_0_0_1px_rgba(214,162,75,0.3)]"
-                    : "border-[var(--border-base)] hover:border-[var(--border-strong)] bg-[var(--bg-card)]"
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  {/* Radio indicator */}
-                  <div className={`w-5 h-5 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center transition-colors ${
-                    isSelected ? "border-[#d6a24b] bg-[#d6a24b]" : "border-[var(--border-strong)]"
-                  }`}>
-                    {isSelected && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ duration: 0.25, ease: ease.out }}
-                        className="w-2 h-2 rounded-full bg-black"
-                      />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-2">
-                        <span className={`transition-colors ${isSelected ? "text-[#d6a24b]" : "text-[var(--text-faint)]"}`}>
-                          {pricingIcons[opt.id]}
-                        </span>
-                        <span className="text-[var(--text-primary)] text-sm font-semibold">{opt.label}</span>
-                      </div>
-                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border transition-colors ${
-                        isSelected
-                          ? "text-[#d6a24b] border-[#d6a24b]/40 bg-[#d6a24b]/10"
-                          : opt.surcharge === 0
-                          ? "text-green-400 border-green-400/30 bg-green-400/10"
-                          : "text-[var(--text-muted)] border-[var(--border-base)]"
-                      }`}>
-                        {opt.badge}
-                      </span>
-                    </div>
-                    <p className="text-[var(--text-faint)] text-xs mt-1.5 leading-relaxed">{opt.description}</p>
-                  </div>
-                </div>
-              </motion.button>
-            );
-          })}
-        </div>
-
-        {!pricingOption && (
-          <p className="text-[var(--text-faint)] text-xs mt-2 italic">↑ Please select an option above to continue.</p>
-        )}
       </div>
 
       {/* Add-ons */}
