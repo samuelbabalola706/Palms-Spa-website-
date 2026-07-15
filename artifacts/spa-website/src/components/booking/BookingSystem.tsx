@@ -65,7 +65,6 @@ export default function BookingSystem() {
           matchedService = bookingServices.find((s) => s.name.startsWith(prefix)) ?? null;
         }
       }
-
       // Fallback: match by category
       if (!matchedService && selectedInput?.value) {
         const map: Record<string, string> = {

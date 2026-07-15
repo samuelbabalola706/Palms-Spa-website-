@@ -8,7 +8,7 @@ const WHATSAPP_NUMBER = "2348123020985";
 const WHATSAPP_DISPLAY = "+234 812 302 0985";
 
 const PREFILLED_MESSAGE =
-  "Welcome to Harmony Palms. 🌿 A cozy, private space curated just for you, appointments only, and spaces are limited this week.\n\nPrefer to stay in? We also offer home services.\n\nWhat are you looking to experience today?\n\nBook a Session?";
+  "Hi Harmony Palms, I'd like to check availability for an appointment 🌿";
 
 export default function WhatsAppButton() {
   const [showTooltip, setShowTooltip] = useState(false);
