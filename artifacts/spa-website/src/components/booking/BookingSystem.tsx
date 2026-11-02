@@ -1297,18 +1297,7 @@ function ConfirmationView({ code, guest, service, date, time, location, total, o
         </div>
       </motion.div>
 
-      <motion.button
-        onClick={onClose}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.85, duration: 0.5 }}
-        whileHover={{ y: -2 }}
-        whileTap={{ scale: 0.97 }}
-        className="btn-gold mt-8 inline-flex items-center gap-2 bg-[#c88e2e] hover:bg-[#d6a24b] text-black text-xs font-semibold tracking-wider uppercase px-7 py-3 rounded-full transition-colors"
-      >
-        Done
-        <CheckIcon size={13} />
-      </motion.button>
+     
     </motion.div>
   );
 }
